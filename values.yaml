@@ -1,0 +1,23 @@
+# Default values for helm-schema-importer.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+imageCredentials:
+  repository: armdocker.rnd.ericsson.se/aia/schema-registry-importer
+
+   
+imagePullPolicy: "Always"
+
+schemaregistry:
+   clientServiceName: "sr-my-schemareg"
+   clientPort: "8081"
+
+dataDirectory: "/pmdata"
+dataMountServer: "10.44.149.94"
+
+
+
+
+
+
+

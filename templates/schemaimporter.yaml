@@ -1,0 +1,44 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "schema-importer.fullname" . }}
+  labels:
+    app: {{ template "schema-importer.name" . }}
+    heritage: "{{ .Release.Service }}"
+    release: "{{ .Release.Name }}"
+    chart:  {{ template "schema-importer.chart" . }}
+
+spec:
+  template:
+    metadata:
+      labels:
+        app: {{ template "schema-importer.name" . }}
+        release: {{.Release.Name }}
+    spec:
+      restartPolicy: OnFailure
+      initContainers:
+      - name: {{ .Chart.Name }}-init
+        image: "{{ .Values.imageCredentials.repository }}"
+        env:
+        - name: SCHEMA_IMPORTER_SCHEMA_REGISTRY_CONNECTION_URL
+          value: "{{ printf "%s:%s" .Values.schemaregistry.clientServiceName  .Values.schemaregistry.clientPort }}" 
+        command: ['curl', '-X', 'GET', 'http://$(SCHEMA_IMPORTER_SCHEMA_REGISTRY_CONNECTION_URL)']
+
+      containers:
+      - name: {{ .Chart.Name }}
+        image: "{{ .Values.imageCredentials.repository }}"
+        env:
+        - name: SCHEMA_IMPORTER_SCHEMA_REGISTRY_CONNECTION_URL
+          value: "{{ printf "%s:%s" .Values.schemaregistry.clientServiceName  .Values.schemaregistry.clientPort }}"
+        args:
+        - -dir=/pmdata/avro_schemas
+        - -registry=http://$(SCHEMA_IMPORTER_SCHEMA_REGISTRY_CONNECTION_URL)
+        volumeMounts:
+            - name: pmdata
+              mountPath: "{{ .Values.dataDirectory }}"
+              readOnly: true
+      volumes:
+        - name: pmdata
+          nfs:
+            server: "{{ .Values.dataMountServer}}"
+            path: "{{ .Values.dataDirectory }}"
